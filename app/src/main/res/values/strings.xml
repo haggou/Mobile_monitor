@@ -1,0 +1,43 @@
+<resources>
+    <string name="app_name">Connect Activity</string>
+    <string name="cd_hero_banner">Connect Activity security shield banner</string>
+    <string name="cd_empty_vault">Encrypted activity vault illustration</string>
+    <string name="auth_title">Connect Activity</string>
+    <string name="auth_subtitle">Review and synchronize your authorized call history, SMS activity, and encrypted recordings across your own devices with full transparency.</string>
+    <string name="auth_principle_consent_title">Explicit Consent First</string>
+    <string name="auth_principle_consent_body">Nothing is collected or synced until you grant permission and enable each activity scope.</string>
+    <string name="auth_principle_encryption_title">Keystore-Backed Local Encryption</string>
+    <string name="auth_principle_encryption_body">SMS payloads and imported recordings are encrypted at rest with Android Keystore AES-256-GCM.</string>
+    <string name="auth_principle_isolation_title">Strict Owner Isolation</string>
+    <string name="auth_principle_isolation_body">All cloud records are scoped to your verified Google account and protected by zero-trust rules.</string>
+    <string name="sign_in_with_google">Sign in with Google</string>
+
+    <string name="consent_title">Your Privacy &amp; Consent</string>
+    <string name="consent_intro">Connect Activity lets you view your own call and SMS activity remotely. Review how data is handled before continuing.</string>
+    <string name="consent_what_collected_title">What Can Be Collected</string>
+    <string name="consent_what_collected_body">Only categories you opt into: call log metadata (number, contact name if permitted, date, duration, type), authorized or user-imported SMS records, and audio recordings you explicitly add.</string>
+    <string name="consent_cloud_sync_title">How Cloud Synchronization Works</string>
+    <string name="consent_cloud_sync_body">Authorized records are cached locally, deduplicated by SHA-256 hash, and synced over HTTPS to your isolated Cloud Firestore account via WorkManager.</string>
+    <string name="consent_sharing_title">Authorized Viewers &amp; Transparency</string>
+    <string name="consent_sharing_body">Every connected device is visible to you. You can inspect, export, revoke consent, or permanently delete cloud data at any time.</string>
+    <string name="consent_grant_button">Grant Consent &amp; Continue</string>
+    <string name="consent_decline_button">Decline Optional Sync</string>
+
+    <string name="nav_home">Home</string>
+    <string name="nav_calls">Calls</string>
+    <string name="nav_messages">Messages</string>
+    <string name="nav_recordings">Recordings</string>
+    <string name="nav_settings">Settings</string>
+
+    <string name="sync_now">Sync Now</string>
+    <string name="syncing_label">Synchronizing…</string>
+    <string name="recording_unsupported_notice">Call recording is not supported by this device or current Android configuration.</string>
+    <string name="recording_restriction_detail">Android 10+ restricts cellular call audio capture to privileged system dialers. Connect Activity never uses Accessibility Services, hidden APIs, or silent microphone capture. You may lawfully import authorized recordings from a supported system recorder into your encrypted vault.</string>
+    <string name="sms_restriction_notice">Direct SMS access requires eligible Android permissions. You can always import an authorized SMS JSON or CSV export without granting broad device permissions.</string>
+    <string name="empty_calls_title">No call activity cached yet</string>
+    <string name="empty_calls_body">Grant Call Log permission and tap Refresh to view authorized call history.</string>
+    <string name="empty_sms_title">No SMS records cached yet</string>
+    <string name="empty_sms_body">Import a JSON/CSV message export or scan authorized device SMS.</string>
+    <string name="empty_recordings_title">No recordings in encrypted vault</string>
+    <string name="empty_recordings_body">Import an authorized audio recording to encrypt it with Android Keystore and manage cloud sync consent.</string>
+</resources>

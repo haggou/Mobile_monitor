@@ -1,0 +1,314 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidTimestamp(ts) {
+      return ts is timestamp && ts <= request.time;
+    }
+
+    function isOwner(ownerUid) {
+      return isSignedIn() && request.auth.uid == ownerUid;
+    }
+
+    function isValidUserProfile(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.email is string && data.email.size() <= 320 &&
+             data.displayName is string && data.displayName.size() <= 120 &&
+             data.syncEnabled is bool &&
+             data.consentAccepted is bool &&
+             data.consentVersion is string && data.consentVersion.size() >= 1 && data.consentVersion.size() <= 32 &&
+             (!('consentUpdatedAt' in data) || data.consentUpdatedAt == null || isValidTimestamp(data.consentUpdatedAt)) &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidDeviceRecord(data) {
+      return data.ownerUserId is string && data.ownerUserId == request.auth.uid &&
+             data.deviceId is string && isValidId(data.deviceId) &&
+             data.deviceName is string && data.deviceName.size() >= 1 && data.deviceName.size() <= 100 &&
+             data.manufacturer is string && data.manufacturer.size() <= 80 &&
+             data.model is string && data.model.size() <= 80 &&
+             data.osVersion is string && data.osVersion.size() <= 40 &&
+             data.isConnected is bool &&
+             data.callRecordingSupported is bool &&
+             (!('lastSyncAt' in data) || data.lastSyncAt == null || isValidTimestamp(data.lastSyncAt)) &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidCallRecord(data) {
+      return data.ownerUserId is string && data.ownerUserId == request.auth.uid &&
+             data.deviceId is string && isValidId(data.deviceId) &&
+             data.source is string && data.source.size() >= 1 && data.source.size() <= 64 &&
+             data.recordHash is string && data.recordHash.size() >= 8 && data.recordHash.size() <= 128 &&
+             data.phoneNumber is string && data.phoneNumber.size() >= 1 && data.phoneNumber.size() <= 64 &&
+             data.contactName is string && data.contactName.size() <= 120 &&
+             data.callType in ['incoming', 'outgoing', 'missed', 'rejected'] &&
+             data.callTimestampMillis is int && data.callTimestampMillis >= 0 &&
+             data.durationSeconds is int && data.durationSeconds >= 0 && data.durationSeconds <= 864000 &&
+             isValidTimestamp(data.syncedAt) &&
+             isValidTimestamp(data.createdAt);
+    }
+
+    function isValidSmsRecord(data) {
+      return data.ownerUserId is string && data.ownerUserId == request.auth.uid &&
+             data.deviceId is string && isValidId(data.deviceId) &&
+             data.source is string && data.source.size() >= 1 && data.source.size() <= 64 &&
+             data.recordHash is string && data.recordHash.size() >= 8 && data.recordHash.size() <= 128 &&
+             data.address is string && data.address.size() >= 1 && data.address.size() <= 64 &&
+             data.contactName is string && data.contactName.size() <= 120 &&
+             data.messageBody is string && data.messageBody.size() <= 4000 &&
+             data.direction in ['incoming', 'outgoing'] &&
+             data.deliveryStatus is string && data.deliveryStatus.size() <= 32 &&
+             data.messageTimestampMillis is int && data.messageTimestampMillis >= 0 &&
+             isValidTimestamp(data.syncedAt) &&
+             isValidTimestamp(data.createdAt);
+    }
+
+    function isValidRecordingMetadata(data) {
+      return data.ownerUserId is string && data.ownerUserId == request.auth.uid &&
+             data.deviceId is string && isValidId(data.deviceId) &&
+             data.source is string && data.source.size() >= 1 && data.source.size() <= 64 &&
+             (!('callRecordId' in data) || data.callRecordId == null || (data.callRecordId is string && data.callRecordId.size() <= 128)) &&
+             data.phoneNumber is string && data.phoneNumber.size() <= 64 &&
+             data.contactName is string && data.contactName.size() <= 120 &&
+             data.fileName is string && data.fileName.size() >= 1 && data.fileName.size() <= 200 &&
+             data.mimeType is string && data.mimeType.size() >= 1 && data.mimeType.size() <= 64 &&
+             data.durationSeconds is int && data.durationSeconds >= 0 && data.durationSeconds <= 86400 &&
+             data.sizeBytes is int && data.sizeBytes >= 0 &&
+             data.encryptionAlgorithm is string && data.encryptionAlgorithm.size() >= 1 && data.encryptionAlgorithm.size() <= 64 &&
+             data.authorizedForSync is bool &&
+             data.recordedAtMillis is int && data.recordedAtMillis >= 0 &&
+             isValidTimestamp(data.syncedAt) &&
+             isValidTimestamp(data.createdAt);
+    }
+
+    function isValidConsentRecord(data) {
+      return data.ownerUserId is string && data.ownerUserId == request.auth.uid &&
+             data.deviceId is string && isValidId(data.deviceId) &&
+             data.source is string && data.source.size() >= 1 && data.source.size() <= 64 &&
+             data.consentType is string && data.consentType.size() >= 1 && data.consentType.size() <= 64 &&
+             data.granted is bool &&
+             data.policyVersion is string && data.policyVersion.size() >= 1 && data.policyVersion.size() <= 32 &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidSyncStatusRecord(data) {
+      return data.ownerUserId is string && data.ownerUserId == request.auth.uid &&
+             data.deviceId is string && isValidId(data.deviceId) &&
+             data.source is string && data.source.size() >= 1 && data.source.size() <= 64 &&
+             data.status in ['idle', 'syncing', 'success', 'error'] &&
+             data.callsSyncedCount is int && data.callsSyncedCount >= 0 &&
+             data.smsSyncedCount is int && data.smsSyncedCount >= 0 &&
+             data.recordingsSyncedCount is int && data.recordingsSyncedCount >= 0 &&
+             (!('errorMessage' in data) || data.errorMessage == null || (data.errorMessage is string && data.errorMessage.size() <= 500)) &&
+             isValidTimestamp(data.lastSyncAt) &&
+             isValidTimestamp(data.createdAt);
+    }
+
+    function isValidAuthorizedShare(data) {
+      return data.ownerUserId is string && data.ownerUserId == request.auth.uid &&
+             data.deviceId is string && isValidId(data.deviceId) &&
+             data.source is string && data.source.size() >= 1 && data.source.size() <= 64 &&
+             data.viewerEmail is string && data.viewerEmail.size() >= 3 && data.viewerEmail.size() <= 320 &&
+             data.scope in ['calls', 'sms', 'recordings', 'all'] &&
+             data.status in ['active', 'revoked'] &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidAuditLog(data) {
+      return data.ownerUserId is string && data.ownerUserId == request.auth.uid &&
+             data.deviceId is string && isValidId(data.deviceId) &&
+             data.source is string && data.source.size() >= 1 && data.source.size() <= 64 &&
+             data.action is string && data.action.size() >= 1 && data.action.size() <= 64 &&
+             data.details is string && data.details.size() <= 500 &&
+             isValidTimestamp(data.createdAt);
+    }
+
+    match /users/{userId} {
+      allow get: if isValidId(userId) && isOwner(userId);
+      allow list: if isSignedIn() && existing().userId == request.auth.uid;
+      allow create: if isValidId(userId) &&
+                       isOwner(userId) &&
+                       incoming().keys().hasAll(['userId', 'email', 'displayName', 'syncEnabled', 'consentAccepted', 'consentVersion', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'email', 'displayName', 'syncEnabled', 'consentAccepted', 'consentVersion', 'consentUpdatedAt', 'createdAt', 'updatedAt']) &&
+                       isValidUserProfile(incoming());
+      allow update: if isValidId(userId) &&
+                       isOwner(userId) &&
+                       isValidUserProfile(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['email', 'displayName', 'syncEnabled', 'consentAccepted', 'consentVersion', 'consentUpdatedAt', 'updatedAt']);
+      allow delete: if isValidId(userId) && isOwner(userId);
+    }
+
+    match /devices/{deviceId} {
+      allow get: if isValidId(deviceId) && isSignedIn() && (resource == null || isOwner(existing().ownerUserId));
+      allow list: if isSignedIn() && existing().ownerUserId == request.auth.uid;
+      allow create: if isValidId(deviceId) &&
+                       isSignedIn() &&
+                       incoming().keys().hasAll(['ownerUserId', 'deviceId', 'deviceName', 'manufacturer', 'model', 'osVersion', 'isConnected', 'callRecordingSupported', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['ownerUserId', 'deviceId', 'deviceName', 'manufacturer', 'model', 'osVersion', 'isConnected', 'callRecordingSupported', 'lastSyncAt', 'createdAt', 'updatedAt']) &&
+                       isValidDeviceRecord(incoming());
+      allow update: if isValidId(deviceId) &&
+                       isOwner(existing().ownerUserId) &&
+                       isValidDeviceRecord(incoming()) &&
+                       incoming().ownerUserId == existing().ownerUserId &&
+                       incoming().deviceId == existing().deviceId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['deviceName', 'osVersion', 'isConnected', 'callRecordingSupported', 'lastSyncAt', 'updatedAt']);
+      allow delete: if isValidId(deviceId) && isOwner(existing().ownerUserId);
+    }
+
+    match /call_records/{recordId} {
+      allow get: if isValidId(recordId) && isSignedIn() && (resource == null || isOwner(existing().ownerUserId));
+      allow list: if isSignedIn() && existing().ownerUserId == request.auth.uid;
+      allow create: if isValidId(recordId) &&
+                       isSignedIn() &&
+                       incoming().keys().hasAll(['ownerUserId', 'deviceId', 'source', 'recordHash', 'phoneNumber', 'contactName', 'callType', 'callTimestampMillis', 'durationSeconds', 'syncedAt', 'createdAt']) &&
+                       incoming().keys().hasOnly(['ownerUserId', 'deviceId', 'source', 'recordHash', 'phoneNumber', 'contactName', 'callType', 'callTimestampMillis', 'durationSeconds', 'syncedAt', 'createdAt']) &&
+                       isValidCallRecord(incoming());
+      allow update: if isValidId(recordId) &&
+                       isOwner(existing().ownerUserId) &&
+                       isValidCallRecord(incoming()) &&
+                       incoming().ownerUserId == existing().ownerUserId &&
+                       incoming().deviceId == existing().deviceId &&
+                       incoming().recordHash == existing().recordHash &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['contactName', 'syncedAt']);
+      allow delete: if isValidId(recordId) && isOwner(existing().ownerUserId);
+    }
+
+    match /sms_records/{recordId} {
+      allow get: if isValidId(recordId) && isSignedIn() && (resource == null || isOwner(existing().ownerUserId));
+      allow list: if isSignedIn() && existing().ownerUserId == request.auth.uid;
+      allow create: if isValidId(recordId) &&
+                       isSignedIn() &&
+                       incoming().keys().hasAll(['ownerUserId', 'deviceId', 'source', 'recordHash', 'address', 'contactName', 'messageBody', 'direction', 'deliveryStatus', 'messageTimestampMillis', 'syncedAt', 'createdAt']) &&
+                       incoming().keys().hasOnly(['ownerUserId', 'deviceId', 'source', 'recordHash', 'address', 'contactName', 'messageBody', 'direction', 'deliveryStatus', 'messageTimestampMillis', 'syncedAt', 'createdAt']) &&
+                       isValidSmsRecord(incoming());
+      allow update: if isValidId(recordId) &&
+                       isOwner(existing().ownerUserId) &&
+                       isValidSmsRecord(incoming()) &&
+                       incoming().ownerUserId == existing().ownerUserId &&
+                       incoming().deviceId == existing().deviceId &&
+                       incoming().recordHash == existing().recordHash &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['contactName', 'deliveryStatus', 'syncedAt']);
+      allow delete: if isValidId(recordId) && isOwner(existing().ownerUserId);
+    }
+
+    match /recordings/{recordingId} {
+      allow get: if isValidId(recordingId) && isSignedIn() && (resource == null || isOwner(existing().ownerUserId));
+      allow list: if isSignedIn() && existing().ownerUserId == request.auth.uid;
+      allow create: if isValidId(recordingId) &&
+                       isSignedIn() &&
+                       incoming().keys().hasAll(['ownerUserId', 'deviceId', 'source', 'phoneNumber', 'contactName', 'fileName', 'mimeType', 'durationSeconds', 'sizeBytes', 'encryptionAlgorithm', 'authorizedForSync', 'recordedAtMillis', 'syncedAt', 'createdAt']) &&
+                       incoming().keys().hasOnly(['ownerUserId', 'deviceId', 'source', 'callRecordId', 'phoneNumber', 'contactName', 'fileName', 'mimeType', 'durationSeconds', 'sizeBytes', 'encryptionAlgorithm', 'authorizedForSync', 'recordedAtMillis', 'syncedAt', 'createdAt']) &&
+                       isValidRecordingMetadata(incoming());
+      allow update: if isValidId(recordingId) &&
+                       isOwner(existing().ownerUserId) &&
+                       isValidRecordingMetadata(incoming()) &&
+                       incoming().ownerUserId == existing().ownerUserId &&
+                       incoming().deviceId == existing().deviceId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['authorizedForSync', 'contactName', 'syncedAt']);
+      allow delete: if isValidId(recordingId) && isOwner(existing().ownerUserId);
+    }
+
+    match /consent_records/{consentId} {
+      allow get: if isValidId(consentId) && isSignedIn() && (resource == null || isOwner(existing().ownerUserId));
+      allow list: if isSignedIn() && existing().ownerUserId == request.auth.uid;
+      allow create: if isValidId(consentId) &&
+                       isSignedIn() &&
+                       incoming().keys().hasAll(['ownerUserId', 'deviceId', 'source', 'consentType', 'granted', 'policyVersion', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['ownerUserId', 'deviceId', 'source', 'consentType', 'granted', 'policyVersion', 'createdAt', 'updatedAt']) &&
+                       isValidConsentRecord(incoming());
+      allow update: if isValidId(consentId) &&
+                       isOwner(existing().ownerUserId) &&
+                       isValidConsentRecord(incoming()) &&
+                       incoming().ownerUserId == existing().ownerUserId &&
+                       incoming().consentType == existing().consentType &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['granted', 'policyVersion', 'updatedAt']);
+      allow delete: if isValidId(consentId) && isOwner(existing().ownerUserId);
+    }
+
+    match /sync_status/{statusId} {
+      allow get: if isValidId(statusId) && isSignedIn() && (resource == null || isOwner(existing().ownerUserId));
+      allow list: if isSignedIn() && existing().ownerUserId == request.auth.uid;
+      allow create: if isValidId(statusId) &&
+                       isSignedIn() &&
+                       incoming().keys().hasAll(['ownerUserId', 'deviceId', 'source', 'status', 'callsSyncedCount', 'smsSyncedCount', 'recordingsSyncedCount', 'lastSyncAt', 'createdAt']) &&
+                       incoming().keys().hasOnly(['ownerUserId', 'deviceId', 'source', 'status', 'callsSyncedCount', 'smsSyncedCount', 'recordingsSyncedCount', 'errorMessage', 'lastSyncAt', 'createdAt']) &&
+                       isValidSyncStatusRecord(incoming());
+      allow update: if isValidId(statusId) &&
+                       isOwner(existing().ownerUserId) &&
+                       isValidSyncStatusRecord(incoming()) &&
+                       incoming().ownerUserId == existing().ownerUserId &&
+                       incoming().deviceId == existing().deviceId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['source', 'status', 'callsSyncedCount', 'smsSyncedCount', 'recordingsSyncedCount', 'errorMessage', 'lastSyncAt']);
+      allow delete: if isValidId(statusId) && isOwner(existing().ownerUserId);
+    }
+
+    match /authorized_shares/{shareId} {
+      allow get: if isValidId(shareId) && isSignedIn() && (
+        resource == null ||
+        isOwner(existing().ownerUserId) ||
+        (request.auth.token.email_verified == true && existing().viewerEmail == request.auth.token.email)
+      );
+      allow list: if isSignedIn() && (
+        existing().ownerUserId == request.auth.uid ||
+        (request.auth.token.email_verified == true && existing().viewerEmail == request.auth.token.email)
+      );
+      allow create: if isValidId(shareId) &&
+                       isSignedIn() &&
+                       incoming().keys().hasAll(['ownerUserId', 'deviceId', 'source', 'viewerEmail', 'scope', 'status', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['ownerUserId', 'deviceId', 'source', 'viewerEmail', 'scope', 'status', 'createdAt', 'updatedAt']) &&
+                       isValidAuthorizedShare(incoming());
+      allow update: if isValidId(shareId) &&
+                       isOwner(existing().ownerUserId) &&
+                       isValidAuthorizedShare(incoming()) &&
+                       incoming().ownerUserId == existing().ownerUserId &&
+                       incoming().viewerEmail == existing().viewerEmail &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['scope', 'status', 'updatedAt']);
+      allow delete: if isValidId(shareId) && isOwner(existing().ownerUserId);
+    }
+
+    match /audit_logs/{logId} {
+      allow get: if isValidId(logId) && isSignedIn() && (resource == null || isOwner(existing().ownerUserId));
+      allow list: if isSignedIn() && existing().ownerUserId == request.auth.uid;
+      allow create: if isValidId(logId) &&
+                       isSignedIn() &&
+                       incoming().keys().hasAll(['ownerUserId', 'deviceId', 'source', 'action', 'details', 'createdAt']) &&
+                       incoming().keys().hasOnly(['ownerUserId', 'deviceId', 'source', 'action', 'details', 'createdAt']) &&
+                       isValidAuditLog(incoming());
+      allow update: if false;
+      allow delete: if isValidId(logId) && isOwner(existing().ownerUserId);
+    }
+  }
+}

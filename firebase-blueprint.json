@@ -1,0 +1,204 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated user account, sync toggle, and master consent state.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Firebase Auth UID of the owner." },
+        "email": { "type": "string", "description": "Verified account email address." },
+        "displayName": { "type": "string", "description": "User display name." },
+        "syncEnabled": { "type": "boolean", "description": "Whether background cloud sync is enabled." },
+        "consentAccepted": { "type": "boolean", "description": "Whether the user has granted explicit consent." },
+        "consentVersion": { "type": "string", "description": "Version of the consent notice accepted." },
+        "consentUpdatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp of latest consent update." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp when created." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp when updated." }
+      },
+      "required": ["userId", "email", "displayName", "syncEnabled", "consentAccepted", "consentVersion", "createdAt", "updatedAt"]
+    },
+    "DeviceRecord": {
+      "title": "DeviceRecord",
+      "description": "Registered Android device authorized by the account owner.",
+      "type": "object",
+      "properties": {
+        "ownerUserId": { "type": "string", "description": "Owner Firebase Auth UID." },
+        "deviceId": { "type": "string", "description": "Unique stable device installation identifier." },
+        "deviceName": { "type": "string", "description": "Human-readable device label." },
+        "manufacturer": { "type": "string", "description": "Device manufacturer." },
+        "model": { "type": "string", "description": "Device hardware model." },
+        "osVersion": { "type": "string", "description": "Android OS version." },
+        "isConnected": { "type": "boolean", "description": "Whether this device is currently connected." },
+        "callRecordingSupported": { "type": "boolean", "description": "Whether lawful call recording is supported on device." },
+        "lastSyncAt": { "type": "string", "format": "date-time", "description": "Last successful sync timestamp." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server creation timestamp." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server update timestamp." }
+      },
+      "required": ["ownerUserId", "deviceId", "deviceName", "manufacturer", "model", "osVersion", "isConnected", "callRecordingSupported", "createdAt", "updatedAt"]
+    },
+    "CallRecord": {
+      "title": "CallRecord",
+      "description": "Authorized call log record synchronized from a connected device.",
+      "type": "object",
+      "properties": {
+        "ownerUserId": { "type": "string", "description": "Owner Firebase Auth UID." },
+        "deviceId": { "type": "string", "description": "Originating device ID." },
+        "source": { "type": "string", "description": "Origin source such as android_call_log or manual_import." },
+        "recordHash": { "type": "string", "description": "SHA-256 deduplication hash." },
+        "phoneNumber": { "type": "string", "description": "Call counterparty phone number." },
+        "contactName": { "type": "string", "description": "Resolved contact display name if permitted." },
+        "callType": { "type": "string", "enum": ["incoming", "outgoing", "missed", "rejected"], "description": "Call direction/outcome." },
+        "callTimestampMillis": { "type": "integer", "description": "Epoch milliseconds of the call." },
+        "durationSeconds": { "type": "integer", "description": "Call duration in seconds." },
+        "syncedAt": { "type": "string", "format": "date-time", "description": "Server timestamp when synchronized." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp when created." }
+      },
+      "required": ["ownerUserId", "deviceId", "source", "recordHash", "phoneNumber", "contactName", "callType", "callTimestampMillis", "durationSeconds", "syncedAt", "createdAt"]
+    },
+    "SmsRecord": {
+      "title": "SmsRecord",
+      "description": "Authorized SMS activity record imported or read with consent.",
+      "type": "object",
+      "properties": {
+        "ownerUserId": { "type": "string", "description": "Owner Firebase Auth UID." },
+        "deviceId": { "type": "string", "description": "Originating device ID." },
+        "source": { "type": "string", "description": "Origin source such as android_sms_provider or user_import." },
+        "recordHash": { "type": "string", "description": "SHA-256 deduplication hash." },
+        "address": { "type": "string", "description": "Sender or recipient phone number." },
+        "contactName": { "type": "string", "description": "Optional contact display name." },
+        "messageBody": { "type": "string", "description": "Authorized SMS message text." },
+        "direction": { "type": "string", "enum": ["incoming", "outgoing"], "description": "Message direction." },
+        "deliveryStatus": { "type": "string", "description": "Delivery status label." },
+        "messageTimestampMillis": { "type": "integer", "description": "Epoch milliseconds of message." },
+        "syncedAt": { "type": "string", "format": "date-time", "description": "Server timestamp when synchronized." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp when created." }
+      },
+      "required": ["ownerUserId", "deviceId", "source", "recordHash", "address", "contactName", "messageBody", "direction", "deliveryStatus", "messageTimestampMillis", "syncedAt", "createdAt"]
+    },
+    "RecordingMetadata": {
+      "title": "RecordingMetadata",
+      "description": "Metadata for an authorized call or audio recording.",
+      "type": "object",
+      "properties": {
+        "ownerUserId": { "type": "string", "description": "Owner Firebase Auth UID." },
+        "deviceId": { "type": "string", "description": "Originating device ID." },
+        "source": { "type": "string", "description": "Origin source such as user_imported_audio or supported_system_recorder." },
+        "callRecordId": { "type": "string", "description": "Optional linked call record ID." },
+        "phoneNumber": { "type": "string", "description": "Associated phone number." },
+        "contactName": { "type": "string", "description": "Associated contact name." },
+        "fileName": { "type": "string", "description": "Encrypted local file name." },
+        "mimeType": { "type": "string", "description": "Audio MIME type." },
+        "durationSeconds": { "type": "integer", "description": "Recording duration in seconds." },
+        "sizeBytes": { "type": "integer", "description": "Encrypted payload size in bytes." },
+        "encryptionAlgorithm": { "type": "string", "description": "Encryption scheme e.g. AES-256-GCM-AndroidKeystore." },
+        "authorizedForSync": { "type": "boolean", "description": "Whether the user explicitly authorized cloud metadata sync." },
+        "recordedAtMillis": { "type": "integer", "description": "Epoch milliseconds when recorded." },
+        "syncedAt": { "type": "string", "format": "date-time", "description": "Server timestamp when synchronized." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp when created." }
+      },
+      "required": ["ownerUserId", "deviceId", "source", "phoneNumber", "contactName", "fileName", "mimeType", "durationSeconds", "sizeBytes", "encryptionAlgorithm", "authorizedForSync", "recordedAtMillis", "syncedAt", "createdAt"]
+    },
+    "ConsentRecord": {
+      "title": "ConsentRecord",
+      "description": "Explicit user consent grant or revocation event.",
+      "type": "object",
+      "properties": {
+        "ownerUserId": { "type": "string", "description": "Owner Firebase Auth UID." },
+        "deviceId": { "type": "string", "description": "Device ID." },
+        "source": { "type": "string", "description": "Consent UI origin." },
+        "consentType": { "type": "string", "description": "Scope key e.g. master_sync, call_history, sms_history, recordings." },
+        "granted": { "type": "boolean", "description": "True if granted, false if revoked." },
+        "policyVersion": { "type": "string", "description": "Policy version string." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp when created." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp when updated." }
+      },
+      "required": ["ownerUserId", "deviceId", "source", "consentType", "granted", "policyVersion", "createdAt", "updatedAt"]
+    },
+    "SyncStatusRecord": {
+      "title": "SyncStatusRecord",
+      "description": "Per-device synchronization telemetry record.",
+      "type": "object",
+      "properties": {
+        "ownerUserId": { "type": "string", "description": "Owner Firebase Auth UID." },
+        "deviceId": { "type": "string", "description": "Device ID." },
+        "source": { "type": "string", "description": "Sync worker or manual trigger." },
+        "status": { "type": "string", "enum": ["idle", "syncing", "success", "error"], "description": "Latest sync state." },
+        "callsSyncedCount": { "type": "integer", "description": "Number of call records synced." },
+        "smsSyncedCount": { "type": "integer", "description": "Number of SMS records synced." },
+        "recordingsSyncedCount": { "type": "integer", "description": "Number of recording metadata entries synced." },
+        "errorMessage": { "type": "string", "description": "Optional error summary." },
+        "lastSyncAt": { "type": "string", "format": "date-time", "description": "Server timestamp of latest sync." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp when created." }
+      },
+      "required": ["ownerUserId", "deviceId", "source", "status", "callsSyncedCount", "smsSyncedCount", "recordingsSyncedCount", "lastSyncAt", "createdAt"]
+    },
+    "AuthorizedShare": {
+      "title": "AuthorizedShare",
+      "description": "Explicitly authorized viewer access grant.",
+      "type": "object",
+      "properties": {
+        "ownerUserId": { "type": "string", "description": "Owner Firebase Auth UID." },
+        "deviceId": { "type": "string", "description": "Granting device ID." },
+        "source": { "type": "string", "description": "Origin screen." },
+        "viewerEmail": { "type": "string", "description": "Email of authorized viewer." },
+        "scope": { "type": "string", "enum": ["calls", "sms", "recordings", "all"], "description": "Authorized scope." },
+        "status": { "type": "string", "enum": ["active", "revoked"], "description": "Grant status." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp when created." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp when updated." }
+      },
+      "required": ["ownerUserId", "deviceId", "source", "viewerEmail", "scope", "status", "createdAt", "updatedAt"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Immutable security audit log for sharing, sync, and deletion events.",
+      "type": "object",
+      "properties": {
+        "ownerUserId": { "type": "string", "description": "Owner Firebase Auth UID." },
+        "deviceId": { "type": "string", "description": "Originating device ID." },
+        "source": { "type": "string", "description": "Origin module." },
+        "action": { "type": "string", "description": "Audit action code." },
+        "details": { "type": "string", "description": "Human-readable audit summary." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp when logged." }
+      },
+      "required": ["ownerUserId", "deviceId", "source", "action", "details", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User account profile and privacy settings isolated by UID."
+    },
+    "/devices/{deviceId}": {
+      "schema": { "$ref": "#/entities/DeviceRecord" },
+      "description": "Registered devices owned by authenticated users."
+    },
+    "/call_records/{recordId}": {
+      "schema": { "$ref": "#/entities/CallRecord" },
+      "description": "Synchronized call history records isolated by ownerUserId."
+    },
+    "/sms_records/{recordId}": {
+      "schema": { "$ref": "#/entities/SmsRecord" },
+      "description": "Synchronized SMS records isolated by ownerUserId."
+    },
+    "/recordings/{recordingId}": {
+      "schema": { "$ref": "#/entities/RecordingMetadata" },
+      "description": "Authorized call recording metadata isolated by ownerUserId."
+    },
+    "/consent_records/{consentId}": {
+      "schema": { "$ref": "#/entities/ConsentRecord" },
+      "description": "Explicit user consent grant/revocation records."
+    },
+    "/sync_status/{statusId}": {
+      "schema": { "$ref": "#/entities/SyncStatusRecord" },
+      "description": "Device sync telemetry documents."
+    },
+    "/authorized_shares/{shareId}": {
+      "schema": { "$ref": "#/entities/AuthorizedShare" },
+      "description": "Authorized viewer sharing grants."
+    },
+    "/audit_logs/{logId}": {
+      "schema": { "$ref": "#/entities/AuditLog" },
+      "description": "Security audit trail isolated by ownerUserId."
+    }
+  }
+}
